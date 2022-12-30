@@ -1,4 +1,5 @@
 from . import helpers
+import dash_html_components as html
 
 def is_number(in_value):
     try:
@@ -10,3 +11,9 @@ def is_number(in_value):
     
 def print_something(text):
     return helpers.print_word(text)
+
+def title(children):
+    return html.H1(
+        className='headder',
+        children = children
+    )
