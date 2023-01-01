@@ -7,7 +7,7 @@ import plotly.graph_objs as go
 
 from html_elements import title, link, action_elements, paragraph, input_element
 
-titanic = pd.read_excel('titanic3.xls')
+titanic = pd.read_excel('data/titanic.xls')
 
 app = dash.Dash()
 
