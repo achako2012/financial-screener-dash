@@ -39,6 +39,7 @@ def update_figure(n_intervals, coin_pair, timeframe, num_bars):
     
     data = requests.get(url, params).json()["data"]["ohlc"]
     data = pd.DataFrame(data)
+    
     data.timestamp = pd.to_datetime(data.timestamp, unit = "s")
     
     data['rsi'] = ta.rsi(data.close.astype(float))
