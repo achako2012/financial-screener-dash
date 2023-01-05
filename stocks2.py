@@ -1,11 +1,7 @@
 import pandas as pd
-
 from dash import Dash, dcc, html, Input, Output
 import dash_bootstrap_components as dbc
-import requests
 import plotly.graph_objects as go
-import pandas_ta as ta
-import plotly.express as px
 
 # Clean data
 
@@ -29,53 +25,63 @@ ethbtc_d.drop(['unix', 'Volume ETH', 'Volume BTC'], axis=1, inplace=True)
 etheur_1h.drop(['unix', 'Volume ETH', 'Volume EUR'], axis=1, inplace=True)
 etheur_d.drop(['unix', 'Volume ETH', 'Volume EUR'], axis=1, inplace=True)
 
-# print (btceur_1h['open'].isnull().sum())
-# print (btceur_1h['close'].isnull().sum())
-# print (btceur_1h['high'].isnull().sum())
-# print (btceur_1h['low'].isnull().sum())
-
 # print(btceur_1h.iloc[0])
-
 
 app = Dash()
 
 app.layout = html.Div([
-    
-    dcc.Dropdown(["btcusd", "ethusd", "xrpusd"], id="coin-select", value="btcusd"),
-    
-     dcc.Graph(id="candles"),
-    
+
+    dcc.Dropdown([20, 40, 60, 100], id="candles_length", value=20),
+    dcc.Dropdown(["btceur", "btcusd", "ethbtc", "etheur"],
+                 id="coin_pair", value="btceur"),
+    dcc.Dropdown(["day", "hour"], id="timeframe", value="hour"),
+
+    dcc.Graph(id="candles"),
+
 ])
+
 
 @app.callback(
     Output("candles", "figure"),
-    Input("coin-select", "value"),
+    Input("candles_length", "value"),
+    Input("coin_pair", "value"),
+    Input("timeframe", "value"),
 )
+def update_figure(candles_length, coin_pair, timeframe):
+    
+    # we need to chouse which data frame we'll use
+    if coin_pair == 'btceur':
+        data = btceur_1h, btceur_d
+    elif coin_pair == 'btcusd':
+        data = btcusd_1h, btcusd_d
+    elif coin_pair == 'ethbtc':
+        data = ethbtc_1h, ethbtc_d
+    else:
+        data = etheur_1h, etheur_d
+        
+    # Since we have 2 timeframes for each data frame we need to chose which one we take
+    if timeframe == 'hour':
+        data = data[0]
+    else:
+        data = data[1]
+    
+    # Here we choose the length of data frame
+    data = data.iloc[:candles_length]
 
-def update_figure(coin_pair):
-     
-    print(coin_pair)
-    # data = requests.get(url, params).json()["data"]["ohlc"]
-    # data = pd.DataFrame(data)
-    
-    # data.timestamp = pd.to_datetime(data.timestamp, unit = "s")
-    
-    data = btceur_1h.iloc[:10]
-    
     candles = go.Figure(
-        data = [
+        data=[
             go.Candlestick(
-                x = data.date,
-                open = data.open,
-                high = data.high,
-                low = data.low,
-                close = data.close
+                x=data.date,
+                open=data.open,
+                high=data.high,
+                low=data.low,
+                close=data.close
             )
         ]
     )
-    
+
     candles.update_layout(xaxis_rangeslider_visible=False, height=500)
-    
+
     return candles
 
 
