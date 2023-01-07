@@ -1,149 +1,178 @@
-import dash
-from dash.dependencies import Input, Output
-import dash_core_components as dcc
-import dash_html_components as html
 import pandas as pd
-import plotly.graph_objs as go
+from dash import Dash, dcc, html, Input, Output
+import dash_bootstrap_components as dbc
+import plotly.graph_objects as go
 
-from html_elements import title, link, action_elements, paragraph, input_element
+# TODO:
+# 1. Create Indicator charts
+# 2. Styling the code
 
-titanic = pd.read_excel('data/titanic.xls')
+# Clean data
 
-app = dash.Dash()
+# we need to skip first row with link
+btceur_1h = pd.read_csv('data/BTCEUR_1h.csv', skiprows=1)
+btceur_d = pd.read_csv('data/BTCEUR_d.csv', skiprows=1)
+btcusd_1h = pd.read_csv('data/BTCUSD_1h.csv', skiprows=1)
+btcusd_d = pd.read_csv('data/BTCUSD_d.csv', skiprows=1)
+ethbtc_1h = pd.read_csv('data/ETHBTC_1h.csv', skiprows=1)
+ethbtc_d = pd.read_csv('data/ETHBTC_d.csv', skiprows=1)
+etheur_1h = pd.read_csv('data/ETHEUR_1h.csv', skiprows=1)
+etheur_d = pd.read_csv('data/ETHEUR_d.csv', skiprows=1)
 
-app.layout = html.Div(children=[
-    
-    title('Dash'),
-    
-    link('Titanic data', 'https://www.kaggle.com/c/titanic/data'),
-    
-    action_elements(),
-    
-    paragraph('Data description here'),
-    
-    input_element(),
-    
-    
+# Delete unnecassery columns
+btceur_1h.drop(['unix', 'Volume BTC', 'Volume EUR'], axis=1, inplace=True)
+btceur_d.drop(['unix', 'Volume BTC', 'Volume EUR'], axis=1, inplace=True)
+btcusd_1h.drop(['unix', 'Volume BTC', 'Volume USD'], axis=1, inplace=True)
+btcusd_d.drop(['unix', 'Volume BTC', 'Volume USD'], axis=1, inplace=True)
+ethbtc_1h.drop(['unix', 'Volume ETH', 'Volume BTC'], axis=1, inplace=True)
+ethbtc_d.drop(['unix', 'Volume ETH', 'Volume BTC'], axis=1, inplace=True)
+etheur_1h.drop(['unix', 'Volume ETH', 'Volume EUR'], axis=1, inplace=True)
+etheur_d.drop(['unix', 'Volume ETH', 'Volume EUR'], axis=1, inplace=True)
 
-    # html.Div(
-    #     children=[
-    #         dcc.Markdown('''
-    #         [Titanic data](https://www.kaggle.com/c/titanic/data)
-    #         '''),
-    #     ],
-    # ),
+# Reverse data frames
+btceur_1h = btceur_1h.iloc[::-1]
+btceur_d = btceur_d.iloc[::-1]
+btcusd_1h = btcusd_1h.iloc[::-1]
+btcusd_d = btcusd_d.iloc[::-1]
+ethbtc_1h = ethbtc_1h.iloc[::-1]
+ethbtc_d = ethbtc_d.iloc[::-1]
+etheur_1h = etheur_1h.iloc[::-1]
+etheur_d = etheur_d.iloc[::-1]
 
-    # html.Div(
-    #     className='elements',
-    #     children=[
-    #         dcc.Dropdown(
-    #             id='dropdown',
-    #             options=[
-    #                 {'label': 'Ticket price by passengers class',
-    #                     'value': 'fare_class'},
-    #                 {'label': 'Age by passengers class', 'value': 'age_class'},
-    #             ],
-    #             value='fare_class'
-    #         ),
+app = Dash()
 
-    #         dcc.RadioItems(
-    #             options=[
-    #                 {'label': 'Histogram', 'value': 'hist'},
-    #                 {'label': 'Boxplot', 'value': 'boxplot'}
-    #             ],
-    #             value='hist',
-    #             id='radio-input'
-    #         ),
-    #     ]
-    # ),
+app.layout = html.Div([
 
-    # html.P(
-    #     className='paragraph',
-    #     children='Data description here'
-    # ),
+    dcc.Dropdown(options=[
+        {'label': 'BTC/EUR', 'value': 'btceur'},
+        {'label': 'BTC/USD', 'value': 'btcusd'},
+        {'label': 'ETH/BTC', 'value': 'ethbtc'},
+        {'label': 'ETH/EUR', 'value': 'etheur'},
+    ],
+        id="coin_pair",
+        value="btceur"),
 
-    # html.Div(
-    #     className='inputs',
-    #     children=[
-    #         html.H2(
-    #             id='display-text',
-    #             children='Headder'
-    #         ),
-    #         dcc.Input(id='input-text', value='', type="text"),
+    dcc.Dropdown(["day", "hour"], id="timeframe", value="day"),
 
-    #     ]
-    # ),
+    dcc.Dropdown([2022, 2021, 2020, 2019], id="select_year", value=2022),
 
-    dcc.Graph(
-        id='example-graph',
-        figure={
-            'data': [
-                go.Bar(x=[1, 2, 3], y=[4, 1, 2], name='Cherbourg'),
-                go.Bar(x=[1, 2, 3], y=[2, 4, 5], name='Queenstown'),
-                go.Bar(x=[1, 2, 3], y=[3, 2, 3], name='Southampton')
-            ],
-            'layout': {
-                'title': 'Port of embarkation',
-                'xaxis': {
-                    'title': 'passenger class'
-                },
-                'yaxis': {
-                    'title': 'number of passangers'
-                }
-            }
-        }
-    )
+    dcc.RadioItems(options=[
+        {'label': 'Candles', 'value': 'candles'},
+        {'label': 'OHLC', 'value': 'ohlc'},
+        {'label': 'Line', 'value': 'line'}
+    ],
+        value="candles",
+        id="chart_type"),
 
+    html.Div(id="current_range", children='Your current range is:'),
+
+    html.Div([
+        dcc.RangeSlider(0, 30, 1, value=[
+                        5, 15], marks=None, id="range_slider")
+    ], id="range_slider_container"),
+
+    dcc.Graph(id="candles"),
 ])
 
-@app.callback(
-    Output(component_id='display-text', component_property='children'),
-    [Input(component_id='input-text', component_property='value')]
-)
-def update_output_h2(input_value):
-    return 'Today\'s news: {}'.format(input_value)
 
-@app.callback(
-    Output(component_id='example-graph', component_property='figure'),
-    [
-        Input(component_id='dropdown', component_property='value'),
-        Input(component_id='radio-input', component_property='value')
-    ]
-)
-def update(plot_type_1, plot_type_2):
-    if plot_type_2 == 'hist':
-        display = go.Histogram
+def get_filter_data(coin_pair, timeframe, select_year):
+    # we need to chouse which data frame we'll use
+    if coin_pair == 'btceur':
+        df = btceur_1h, btceur_d
+    elif coin_pair == 'btcusd':
+        df = btcusd_1h, btcusd_d
+    elif coin_pair == 'ethbtc':
+        df = ethbtc_1h, ethbtc_d
     else:
-        display = go.Box
+        df = etheur_1h, etheur_d
 
-    if plot_type_1 == 'fare_class':
-        title = "Ticket price based on passenger's class"
-        plot_function = display
-        first = titanic[titanic.pclass == 1].fare
-        second = titanic[titanic.pclass == 2].fare
-        third = titanic[titanic.pclass == 3].fare
+    # Since we have 2 timeframes for each data frame we need to chose which one we take
+    if timeframe == 'hour':
+        df = df[0]
     else:
-        title = "Passangers age based on passenger's class"
-        plot_function = display
-        first = titanic[titanic.pclass == 1].age
-        second = titanic[titanic.pclass == 2].age
-        third = titanic[titanic.pclass == 3].age
+        df = df[1]
 
-    trace1 = plot_function(x=first, opacity=0.75, name='First class')
-    trace2 = plot_function(x=second, opacity=0.75, name='Second class')
-    trace3 = plot_function(x=third, opacity=0.75, name='Third class')
+    filtered_df = df.loc[(df['date'] > '{}-12-31 00:00:00'.format(select_year-1))
+                         & (df['date'] < '{}-01-01 00:00:00'.format(select_year+1))]
 
-    data = [trace1, trace2, trace3]
+    return filtered_df
 
-    figure = {
-        'data': data,
-        'layout': {
-            'title': title,
+
+@app.callback(
+    Output("range_slider_container", "children"),
+    Input("coin_pair", "value"),
+    Input("timeframe", "value"),
+    Input("select_year", "value"),
+)
+def update_slider(coin_pair, timeframe, select_year):
+    filtered_df = get_filter_data(coin_pair, timeframe, select_year)
+
+    return dcc.RangeSlider(
+        min=0,
+        max=int(len(filtered_df)),
+        step=1,
+        marks={
+            0: {'label': filtered_df.iloc[0].date.split(" ")[0]},
+            int(len(filtered_df))*0.25: {'label': filtered_df.iloc[int((len(filtered_df) - 1)*0.25)].date.split(" ")[0]},
+            int(len(filtered_df))*0.5: {'label': filtered_df.iloc[int((len(filtered_df) - 1)*0.5)].date.split(" ")[0]},
+            int(len(filtered_df))*0.75: {'label': filtered_df.iloc[int((len(filtered_df) - 1)*0.75)].date.split(" ")[0]},
+            int(len(filtered_df)): {'label': filtered_df.iloc[int(len(filtered_df))-1].date.split(" ")[0]}
         },
+        value=[0, 800],
+        id="range_slider")
 
-    }
-    return figure
+
+@app.callback(
+    Output("candles", "figure"),
+    Output("current_range", "children"),
+    Input("coin_pair", "value"),
+    Input("timeframe", "value"),
+    Input("range_slider", "value"),
+    Input("chart_type", "value"),
+    Input("select_year", "value")
+)
+def update_figure(coin_pair, timeframe, range_slider, chart_type, select_year):
+
+    filtered_df = get_filter_data(coin_pair, timeframe, select_year)
+
+    # Here we choose the length of data frame
+    ranged_df = filtered_df.iloc[range_slider[0]:range_slider[1]]
+
+    message = "You current range is: {} - {}".format(ranged_df.iloc[0]['date'].split(
+        " ")[0], ranged_df.iloc[-1]['date'].split(" ")[0])
+
+    if chart_type == 'candles':
+        figure = go.Figure(
+            data=[
+                go.Candlestick(
+                    x=ranged_df['date'],
+                    open=ranged_df['open'],
+                    high=ranged_df['high'],
+                    low=ranged_df['low'],
+                    close=ranged_df['close']
+                )
+            ]
+        )
+    elif chart_type == 'ohlc':
+        figure = go.Figure(
+            data=[
+                go.Ohlc(
+                    x=ranged_df.date,
+                    open=ranged_df.open,
+                    high=ranged_df.high,
+                    low=ranged_df.low,
+                    close=ranged_df.close
+                )
+            ]
+        )
+    else:
+        figure = go.Figure(
+            [go.Scatter(x=ranged_df.date, y=ranged_df.high)])
+
+    figure.update_layout(xaxis_rangeslider_visible=False, height=500)
+
+    return figure, message
 
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(debug=True)
