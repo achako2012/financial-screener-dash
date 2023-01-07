@@ -4,10 +4,8 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 
 # TODO:
-# 1. Create method to return already filtered and cutted data
-# 2. Create html tag with current diaposone description
-# 4. Create Indicator charts
-# 5. Styling the code
+# 1. Create Indicator charts
+# 2. Styling the code
 
 # Clean data
 
@@ -66,8 +64,9 @@ app.layout = html.Div([
         value="candles",
         id="chart_type"),
 
+    html.Div(id="current_range", children='Your current range is:'),
+
     html.Div([
-        html.Div(id="current_range", children='Your current range is:'),
         dcc.RangeSlider(0, 30, 1, value=[
                         5, 15], marks=None, id="range_slider")
     ], id="range_slider_container"),
@@ -76,14 +75,7 @@ app.layout = html.Div([
 ])
 
 
-@app.callback(
-    Output("range_slider_container", "children"),
-    Input("coin_pair", "value"),
-    Input("timeframe", "value"),
-    Input("select_year", "value")
-)
-def update_slider(coin_pair, timeframe, select_year):
-
+def filter_data(coin_pair, timeframe, select_year):
     # we need to chouse which data frame we'll use
     if coin_pair == 'btceur':
         df = btceur_1h, btceur_d
@@ -103,6 +95,18 @@ def update_slider(coin_pair, timeframe, select_year):
     filtered_df = df.loc[(df['date'] > '{}-12-31 00:00:00'.format(select_year-1))
                          & (df['date'] < '{}-01-01 00:00:00'.format(select_year+1))]
 
+    return filtered_df
+
+
+@app.callback(
+    Output("range_slider_container", "children"),
+    Input("coin_pair", "value"),
+    Input("timeframe", "value"),
+    Input("select_year", "value"),
+)
+def update_slider(coin_pair, timeframe, select_year):
+    filtered_df = filter_data(coin_pair, timeframe, select_year)
+
     return dcc.RangeSlider(
         min=0,
         max=int(len(filtered_df)),
@@ -120,6 +124,7 @@ def update_slider(coin_pair, timeframe, select_year):
 
 @app.callback(
     Output("candles", "figure"),
+    Output("current_range", "children"),
     Input("coin_pair", "value"),
     Input("timeframe", "value"),
     Input("range_slider", "value"),
@@ -128,28 +133,13 @@ def update_slider(coin_pair, timeframe, select_year):
 )
 def update_figure(coin_pair, timeframe, range_slider, chart_type, select_year):
 
-    # We need to chouse which data frame we'll use
-    if coin_pair == 'btceur':
-        df = btceur_1h, btceur_d
-    elif coin_pair == 'btcusd':
-        df = btcusd_1h, btcusd_d
-    elif coin_pair == 'ethbtc':
-        df = ethbtc_1h, ethbtc_d
-    else:
-        df = etheur_1h, etheur_d
-
-    # Since we have 2 timeframes for each data frame we need to chose which one we take
-    if timeframe == 'hour':
-        df = df[0]
-    else:
-        df = df[1]
-
-    # Here we need to cut necassery part of data
-    filtered_df = df.loc[(df['date'] > '{}-12-31 00:00:00'.format(select_year-1))
-                         & (df['date'] < '{}-01-01 00:00:00'.format(select_year+1))]
+    filtered_df = filter_data(coin_pair, timeframe, select_year)
 
     # Here we choose the length of data frame
     filtered_df = filtered_df.iloc[range_slider[0]:range_slider[1]]
+
+    message = "You current range is: {} - {}".format(filtered_df.iloc[0]['date'].split(
+        " ")[0], filtered_df.iloc[-1]['date'].split(" ")[0])
 
     if chart_type == 'candles':
         figure = go.Figure(
@@ -181,7 +171,7 @@ def update_figure(coin_pair, timeframe, range_slider, chart_type, select_year):
 
     figure.update_layout(xaxis_rangeslider_visible=False, height=500)
 
-    return figure
+    return figure, message
 
 
 if __name__ == '__main__':
