@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 # 1. Create Indicator charts
 # 2. Styling the code
 
+
 # Clean data
 
 # we need to skip first row with link
@@ -41,38 +42,89 @@ etheur_d = etheur_d.iloc[::-1]
 
 app = Dash()
 
+# Create elements part
+
+
+def create_dropdown(title, options, id, value):
+
+    return html.Div([
+        html.P(title),
+        dcc.Dropdown(options, id=id, value=value)
+    ], style={"width": "100%"})
+
+
+def create_radiobutton(title, options, id, value):
+
+    return html.Div([
+        # html.P(title),
+        dcc.RadioItems(options, id=id, value=value)
+    ])
+
+
+def create_slider():
+
+    return html.Div([
+        html.P(id="current_range", children='You current range is:', style={"margin":"20px 0px 0px 0px"}),
+
+        # Slider with initaila values
+        html.Div([
+            dcc.RangeSlider(0, 30, 1, value=[
+                0, 15], marks=None, id="range_slider")
+        ], id="range_slider_container"),
+    ], style={"width":"80%", "margin": "auto"})
+
+
 app.layout = html.Div([
 
-    dcc.Dropdown(options=[
-        {'label': 'BTC/EUR', 'value': 'btceur'},
-        {'label': 'BTC/USD', 'value': 'btcusd'},
-        {'label': 'ETH/BTC', 'value': 'ethbtc'},
-        {'label': 'ETH/EUR', 'value': 'etheur'},
-    ],
-        id="coin_pair",
-        value="btceur"),
-
-    dcc.Dropdown(["day", "hour"], id="timeframe", value="day"),
-
-    dcc.Dropdown([2022, 2021, 2020, 2019], id="select_year", value=2022),
-
-    dcc.RadioItems(options=[
-        {'label': 'Candles', 'value': 'candles'},
-        {'label': 'OHLC', 'value': 'ohlc'},
-        {'label': 'Line', 'value': 'line'}
-    ],
-        value="candles",
-        id="chart_type"),
-
-    html.Div(id="current_range", children='Your current range is:'),
-
     html.Div([
-        dcc.RangeSlider(0, 30, 1, value=[
-                        5, 15], marks=None, id="range_slider")
-    ], id="range_slider_container"),
+        create_dropdown('Currency',
+                        [
+                            {'label': 'BTC/EUR', 'value': 'btceur'},
+                            {'label': 'BTC/USD', 'value': 'btcusd'},
+                            {'label': 'ETH/BTC', 'value': 'ethbtc'},
+                            {'label': 'ETH/EUR', 'value': 'etheur'},
+                        ],
+                        'coin_pair',
+                        'btceur'),
+
+        create_dropdown('Timeframe', ["day", "hour"], "timeframe", "day"),
+
+        create_dropdown('Select a year', [
+            2022, 2021, 2020, 2019], "select_year", 2022),
+
+    ], style={"display": "flex", "margin": "auto", "justify-content": "space-evenly", "width": "80%", "gap": "10px"}),
+
+    create_slider(),
+    
+    html.Div([
+        create_radiobutton(
+            "Type",
+            [
+                {'label': 'Candles', 'value': 'candles'},
+                {'label': 'OHLC', 'value': 'ohlc'},
+                {'label': 'Line', 'value': 'line'}
+            ],
+            "chart_type",
+            "candles"
+        ),
+
+        create_radiobutton(
+            "Theme",
+            [
+                {'label': 'Dark', 'value': 'plotly_dark'},
+                {'label': 'Light', 'value': 'plotly'}
+            ],
+            "template",
+            "plotly"
+        ),
+        
+    ], style={"display": "flex", "padding-top":"20px", "margin": "auto", "justify-content": "space-between", "width": "80%", "gap": "10px"}),
 
     dcc.Graph(id="candles"),
-])
+], style={
+    "text-align": "center",
+    "font-size": "large"
+})
 
 
 def get_filter_data(coin_pair, timeframe, select_year):
@@ -129,9 +181,10 @@ def update_slider(coin_pair, timeframe, select_year):
     Input("timeframe", "value"),
     Input("range_slider", "value"),
     Input("chart_type", "value"),
-    Input("select_year", "value")
+    Input("select_year", "value"),
+    Input("template", "value")
 )
-def update_figure(coin_pair, timeframe, range_slider, chart_type, select_year):
+def update_figure(coin_pair, timeframe, range_slider, chart_type, select_year, template):
 
     filtered_df = get_filter_data(coin_pair, timeframe, select_year)
 
@@ -169,7 +222,8 @@ def update_figure(coin_pair, timeframe, range_slider, chart_type, select_year):
         figure = go.Figure(
             [go.Scatter(x=ranged_df.date, y=ranged_df.high)])
 
-    figure.update_layout(xaxis_rangeslider_visible=False, height=500)
+    figure.update_layout(xaxis_rangeslider_visible=False,
+                         height=500, template=template)
 
     return figure, message
 
