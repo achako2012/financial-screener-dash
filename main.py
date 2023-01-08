@@ -5,7 +5,9 @@ import plotly.graph_objects as go
 
 # TODO:
 # 1. Create Indicator charts
-# 2. Styling the code
+# 2. Remove clear dropdown button
+# 3. Change Title
+# 4. fix slider last date
 
 
 # Clean data
