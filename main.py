@@ -41,6 +41,7 @@ etheur_1h = etheur_1h.iloc[::-1]
 etheur_d = etheur_d.iloc[::-1]
 
 app = Dash()
+server = app.server
 
 # Create elements part
 
