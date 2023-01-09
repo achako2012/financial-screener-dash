@@ -2,13 +2,8 @@ import pandas as pd
 from dash import Dash, dcc, html, Input, Output
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
-
-# TODO:
-# 1. Create Indicator charts
-# 2. Remove clear dropdown button
-# 3. Change Title
-# 4. fix slider last date
-
+import pandas_ta as ta
+import plotly.express as px
 
 # Clean data
 
@@ -42,8 +37,19 @@ ethbtc_d = ethbtc_d.iloc[::-1]
 etheur_1h = etheur_1h.iloc[::-1]
 etheur_d = etheur_d.iloc[::-1]
 
+# Remove unnecessary data. we need only date starts on 2019
+btceur_1h = btceur_1h[btceur_1h['date'] > '2018-31-12']
+btceur_d = btceur_d[btceur_d['date'] > '2018-31-12']
+btcusd_1h = btcusd_1h[btcusd_1h['date'] > '2018-31-12']
+btcusd_d = btcusd_d[btcusd_d['date'] > '2018-31-12']
+ethbtc_1h = ethbtc_1h[ethbtc_1h['date'] > '2018-31-12']
+ethbtc_d = ethbtc_d[ethbtc_d['date'] > '2018-31-12']
+etheur_1h = etheur_1h[etheur_1h['date'] > '2018-31-12']
+etheur_d = etheur_d[etheur_d['date'] > '2018-31-12']
+
 app = Dash()
 server = app.server
+app.title = "PF-ICA2"
 
 # Create elements part
 
@@ -67,17 +73,20 @@ def create_radiobutton(title, options, id, value):
 def create_slider():
 
     return html.Div([
-        html.P(id="current_range", children='You current range is:', style={"margin":"20px 0px 0px 0px"}),
+        html.P(id="current_range", children='You current range is:',
+               style={"margin": "20px 0px 0px 0px"}),
 
         # Slider with initaila values
         html.Div([
             dcc.RangeSlider(0, 30, 1, value=[
-                0, 15], marks=None, id="range_slider")
+                0, 1000], marks=None, id="range_slider")
         ], id="range_slider_container"),
-    ], style={"width":"80%", "margin": "auto"})
+    ], style={"width": "80%", "margin": "auto"})
 
 
 app.layout = html.Div([
+
+    html.H1("Test project only for PF-ICA2"),
 
     html.Div([
         create_dropdown('Currency',
@@ -98,7 +107,7 @@ app.layout = html.Div([
     ], style={"display": "flex", "margin": "auto", "justify-content": "space-evenly", "width": "80%", "gap": "10px"}),
 
     create_slider(),
-    
+
     html.Div([
         create_radiobutton(
             "Type",
@@ -120,13 +129,17 @@ app.layout = html.Div([
             "template",
             "plotly"
         ),
-        
-    ], style={"display": "flex", "padding-top":"20px", "margin": "auto", "justify-content": "space-between", "width": "80%", "gap": "10px"}),
 
-    dcc.Graph(id="candles"),
+    ], style={"display": "flex", "padding": "20px 0px", "margin": "auto", "justify-content": "space-between", "width": "80%", "gap": "10px"}),
+
+    dcc.Graph(id="candles",style={"display": "inline-block"}),
+
+    dcc.Graph(id="indicator",style={"display": "inline-block"}),
+
 ], style={
     "text-align": "center",
-    "font-size": "large"
+    "font-size": "large",
+    "font-family": "Lato, Verdana, Arial, Tahoma"
 })
 
 
@@ -173,13 +186,14 @@ def update_slider(coin_pair, timeframe, select_year):
             int(len(filtered_df))*0.75: {'label': filtered_df.iloc[int((len(filtered_df) - 1)*0.75)].date.split(" ")[0]},
             int(len(filtered_df)): {'label': filtered_df.iloc[int(len(filtered_df))-1].date.split(" ")[0]}
         },
-        value=[0, 800],
+        value=[0, int(len(filtered_df))],
         id="range_slider")
 
 
 @app.callback(
     Output("candles", "figure"),
     Output("current_range", "children"),
+    Output("indicator", "figure"),
     Input("coin_pair", "value"),
     Input("timeframe", "value"),
     Input("range_slider", "value"),
@@ -228,8 +242,18 @@ def update_figure(coin_pair, timeframe, range_slider, chart_type, select_year, t
     figure.update_layout(xaxis_rangeslider_visible=False,
                          height=500, template=template)
 
-    return figure, message
+    # Indicator starts here
+    ranged_df['rsi'] = ta.rsi(ranged_df.close.astype('float'))
+
+    # Indicator starts after 14th candle
+    ranged_df = ranged_df.iloc[14:]
+
+    indicator = px.line(x=ranged_df.date, y=ranged_df['rsi'])
+
+    indicator.update_layout(height=250, template=template, yaxis={'title': ""}, xaxis={'title': ""})
+
+    return figure, message, indicator
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server()
