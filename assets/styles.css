@@ -1,12 +1,42 @@
-/* * {
+* {
   text-align: center;
-  font-size: large;
+  font-family: "Lato, Verdana, Arial, Tahoma";
 }
 
-.Select-clear{
+.Select-clear {
   display: none;
 }
 
 span {
   width: 100%;
-} */
+}
+
+.dropdown-container {
+  width: 100%;
+}
+
+#current_range {
+  margin: 20px 0px 0px 0px;
+}
+
+#range_slider_container {
+  width: 80%;
+  margin: auto;
+}
+
+.chart-control-elements {
+  display: flex;
+  margin: auto; 
+  justify-content: space-evenly;
+  width: 80%;
+  gap: 10px;
+}
+
+.chart-view-elements {
+  display: flex;
+  padding: 20px 0px;
+  margin: auto;
+  justify-content: space-between;
+  width: 80%;
+  gap: 10px;
+}

@@ -1,9 +1,36 @@
+import pandas as pd
 from dash import Dash, dcc, html, Input, Output
+import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import pandas_ta as ta
 import plotly.express as px
 
-from html_elements import create_slider, create_dropdown, create_radiobutton, clear_data, get_filter_data
+
+def clear_table(table_name):
+    # skip first row with ad link
+    data = pd.read_csv('data/{}.csv'.format(table_name), skiprows=1)
+
+    # delete unnecassery columns
+    data.drop(['unix', 'Volume {}'.format(table_name[:3]),
+              'Volume {}'.format(table_name[3:6])], axis=1, inplace=True)
+
+    # reverse data frames
+    data = data.iloc[::-1]
+
+    # remove unnecessary data. we need only date starts on 2019
+    data = data[data['date'] > '2018-31-12']
+
+    return data
+
+
+def clear_data(array):
+    data = {}
+
+    for elem in array:
+        data[elem] = clear_table(elem)
+
+    return data
+
 
 data = clear_data([
     "BTCEUR_1h",
@@ -16,9 +43,38 @@ data = clear_data([
     "ETHEUR_d"
 ])
 
+
 app = Dash()
 server = app.server
 app.title = "PF-ICA2"
+
+
+def create_dropdown(title, options, id, value):
+
+    return html.Div([
+        html.P(title),
+        dcc.Dropdown(options, id=id, value=value)
+    ], style={"width": "100%"})
+
+
+def create_radiobutton(options, id, value):
+    return html.Div([
+        dcc.RadioItems(options, id=id, value=value)
+    ])
+
+
+def create_slider():
+    return html.Div([
+        html.P(id="current_range", children='You current range is:',
+               style={"margin": "20px 0px 0px 0px"}),
+
+        # Slider with initaila values
+        html.Div([
+            dcc.RangeSlider(0, 30, 1, value=[
+                0, 1000], marks=None, id="range_slider")
+        ], id="range_slider_container"),
+    ], style={"width": "80%", "margin": "auto"})
+
 
 app.layout = html.Div([
     html.H1("Financial data screener"),
@@ -42,7 +98,7 @@ app.layout = html.Div([
         create_dropdown('Select a year', [
             2022, 2021, 2020, 2019], "select_year", 2022),
 
-    ], className="chart-control-elements"),
+    ], style={"display": "flex", "margin": "auto", "justify-content": "space-evenly", "width": "80%", "gap": "10px"}),
 
     create_slider(),
 
@@ -66,12 +122,36 @@ app.layout = html.Div([
             "plotly"
         ),
 
-    ], className="chart-view-elements"),
+    ], style={"display": "flex", "padding": "20px 0px", "margin": "auto", "justify-content": "space-between", "width": "80%", "gap": "10px"}),
 
     dcc.Graph(id="candles"),
 
     dcc.Graph(id="indicator"),
 ])
+
+
+def get_filter_data(coin_pair, timeframe, select_year):
+    # we need to chouse which data frame we'll use
+    if coin_pair == 'btceur':
+        df = data["BTCEUR_1h"], data["BTCEUR_d"]
+    elif coin_pair == 'btcusd':
+        df = data["BTCUSD_1h"], data["BTCUSD_d"]
+    elif coin_pair == 'ethbtc':
+        df = data["ETHBTC_1h"], data["ETHBTC_d"]
+    else:
+        df = data["ETHEUR_1h"], data["ETHEUR_d"]
+
+    # Since we have 2 timeframes for each data frame we need to chose which one we take
+    if timeframe == 'hour':
+        df = df[0]
+    else:
+        df = df[1]
+
+    filtered_df = df.loc[(df['date'] > '{}-12-31 00:00:00'.format(select_year-1))
+                         & (df['date'] < '{}-01-01 00:00:00'.format(select_year+1))]
+
+    return filtered_df
+
 
 @app.callback(
     Output("range_slider_container", "children"),
@@ -80,7 +160,7 @@ app.layout = html.Div([
     Input("select_year", "value"),
 )
 def update_slider(coin_pair, timeframe, select_year):
-    filtered_df = get_filter_data(coin_pair, timeframe, select_year, data)
+    filtered_df = get_filter_data(coin_pair, timeframe, select_year)
 
     return dcc.RangeSlider(
         min=0,
@@ -96,6 +176,7 @@ def update_slider(coin_pair, timeframe, select_year):
         value=[0, int(len(filtered_df))],
         id="range_slider")
 
+
 @app.callback(
     Output("candles", "figure"),
     Output("current_range", "children"),
@@ -108,6 +189,7 @@ def update_slider(coin_pair, timeframe, select_year):
     Input("template", "value")
 )
 def update_figure(coin_pair, timeframe, range_slider, chart_type, select_year, template):
+
     filtered_df = get_filter_data(coin_pair, timeframe, select_year)
 
     # Here we choose the length of data frame
