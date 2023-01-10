@@ -65,7 +65,6 @@ def create_dropdown(title, options, id, value):
 def create_radiobutton(title, options, id, value):
 
     return html.Div([
-        # html.P(title),
         dcc.RadioItems(options, id=id, value=value)
     ])
 
@@ -86,7 +85,7 @@ def create_slider():
 
 app.layout = html.Div([
 
-    html.H1("Test project only for PF-ICA2"),
+    html.H1("This project is a demo of plotly dash possobilityes, only for study prospects."),
 
     html.Div([
         create_dropdown('Currency',
@@ -132,9 +131,9 @@ app.layout = html.Div([
 
     ], style={"display": "flex", "padding": "20px 0px", "margin": "auto", "justify-content": "space-between", "width": "80%", "gap": "10px"}),
 
-    dcc.Graph(id="candles",style={"display": "inline-block"}),
+    dcc.Graph(id="candles"),
 
-    dcc.Graph(id="indicator",style={"display": "inline-block"}),
+    dcc.Graph(id="indicator"),
 
 ], style={
     "text-align": "center",
