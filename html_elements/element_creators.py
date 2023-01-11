@@ -1,6 +1,4 @@
-from dash import dcc
-import dash_html_components as html
-
+from dash import dcc, html
 
 def create_slider():
     return html.Div([

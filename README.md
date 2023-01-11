@@ -2,11 +2,9 @@
 
 ## About this app
 
+This demo represents possobilityes of plotly dash, for ICA part 2
 
-This demo represents a ICA part 2
-
-Original repo: [plotly/dash-brain-surface-viewer](https://github.com/plotly/dash-brain-surface-viewer)
-
+Original repo: [pcu-stocks-project](https://github.com/achako2012/pcu-stocks-project)
 
 ## How to run this app
 
