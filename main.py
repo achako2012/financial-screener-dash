@@ -1,9 +1,10 @@
 from dash import Dash, dcc, html, Input, Output
+import pandas as pd
 import plotly.graph_objects as go
 import pandas_ta as ta
 import plotly.express as px
 
-from html_elements import create_slider, create_dropdown, create_radiobutton, clear_data, get_filter_data
+from html_elements import create_slider, create_dropdown, create_radiobutton, get_filter_data, clear_table, clear_data
 
 data = clear_data([
     "BTCEUR_1h",
@@ -73,6 +74,7 @@ app.layout = html.Div([
     dcc.Graph(id="indicator"),
 ])
 
+
 @app.callback(
     Output("range_slider_container", "children"),
     Input("coin_pair", "value"),
@@ -96,6 +98,7 @@ def update_slider(coin_pair, timeframe, select_year):
         value=[0, int(len(filtered_df))],
         id="range_slider")
 
+
 @app.callback(
     Output("candles", "figure"),
     Output("current_range", "children"),
@@ -108,7 +111,7 @@ def update_slider(coin_pair, timeframe, select_year):
     Input("template", "value")
 )
 def update_figure(coin_pair, timeframe, range_slider, chart_type, select_year, template):
-    filtered_df = get_filter_data(coin_pair, timeframe, select_year)
+    filtered_df = get_filter_data(coin_pair, timeframe, select_year, data)
 
     # Here we choose the length of data frame
     ranged_df = filtered_df.iloc[range_slider[0]:range_slider[1]]
