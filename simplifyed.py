@@ -4,11 +4,14 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import pandas_ta as ta
 import plotly.express as px
+import ssl
 
+# urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:997)>
+ssl._create_default_https_context = ssl._create_unverified_context
 
 def clear_table(table_name):
     # skip first row with ad link
-    data = pd.read_csv('data/{}.csv'.format(table_name), skiprows=1)
+    data = pd.read_csv('https://raw.githubusercontent.com/achako2012/pcu-stocks-project/master/data/{}.csv'.format(table_name), skiprows=1)
 
     # delete unnecassery columns
     data.drop(['unix', 'Volume {}'.format(table_name[:3]),

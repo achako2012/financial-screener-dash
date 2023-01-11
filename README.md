@@ -1,4 +1,4 @@
-# Dash Brain Viewer
+# Financial data screener
 
 ## About this app
 
