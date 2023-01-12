@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import pandas_ta as ta
 import plotly.express as px
 
-from html_elements import create_slider, create_dropdown, create_radiobutton, get_filter_data, clear_data
+from support import create_slider, create_dropdown, create_radiobutton, get_filter_data, clear_data
 
 data = clear_data([
     "BTCEUR_1h",

@@ -27,7 +27,8 @@ def clear_data(array):
 
 
 def get_filter_data(coin_pair, timeframe, select_year, data):
-    # we need to chouse which data frame we'll use
+    
+    # we need to choose which data frame we'll use
     if coin_pair == 'btceur':
         df = data["BTCEUR_1h"], data["BTCEUR_d"]
     elif coin_pair == 'btcusd':
@@ -37,12 +38,13 @@ def get_filter_data(coin_pair, timeframe, select_year, data):
     else:
         df = data["ETHEUR_1h"], data["ETHEUR_d"]
 
-    # Since we have 2 timeframes for each data frame we need to chose which one we take
+    # since we have 2 timeframes for each frame we need to chose which one we take
     if timeframe == 'hour':
         df = df[0]
     else:
         df = df[1]
 
+    # chose the range of data
     filtered_df = df.loc[(df['date'] > '{}-12-31 00:00:00'.format(select_year-1))
                          & (df['date'] < '{}-01-01 00:00:00'.format(select_year+1))]
 
