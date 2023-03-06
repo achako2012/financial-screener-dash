@@ -19,6 +19,8 @@ the following:
 ```bash
 python3 -m venv myvenv
 source myvenv/bin/activate
+# or, if you use fish:
+source myvenv/bin/activate.fish
 ```
 
 Install the requirements:
